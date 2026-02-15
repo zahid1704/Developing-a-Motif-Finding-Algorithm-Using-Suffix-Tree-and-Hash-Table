@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Motif Finding Using Suffix Tree</title>
+
+    <!-- Bootstrap compiled css files -->
+    <link rel="stylesheet" href="assets/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/bootstrap-grid.css">
+    <link rel="stylesheet" href="assets/css/bootstrap-grid.min.css">
+    <link rel="stylesheet" href="assets/css/bootstrap-reboot.css">
+    <link rel="stylesheet" href="assets/css/bootstrap-reboot.min.css">
+    <!-- Custom internal css -->
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <h1 class="display-4 mx-auto" style="width: 700px;">Motif Search Using Suffix Tree</h1>
+        <form name="motifFindingForm" onsubmit="searchMotif(); return false;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="dna">DNA Sequence</label>
+                        <textarea class="form-control" id="dna" name="dna" rows="2">aatctgaatctgcta</textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="sLength()">Show DNA Sequence length</button>
+                    <p class="alert" id="sumit"></p>
+                    <span>
+                        <script>
+                            function sLength() {
+                                var str=document.getElementById("dna").value;
+                                document.getElementById('sumit').innerHTML=str.length;
+                            }
+                        </script>
+                    </span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="motif_length">Motif Length</label>
+                        <input type="number" min="1" max="25" class="form-control" id="motif_length" name='motif_length' placeholder="Motif Length" value="4">
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-2 float-right">Search</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="suffix_tree">Suffix Tree <span id="suffix_tree_processing_time" style="color: #1e7e34;"></span></label>
+                        <textarea class="form-control" id="suffix_tree" name="suffix_tree" rows="8" readonly></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="dna">Motifs <span id="motif_processing_time" style="color: #1e7e34;"></span></label>
+                        <textarea class="form-control" id="substrings" name="substrings" rows="8" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+<!-- Bootstrap compiled js files -->
+<script rel="script" src="assets/js/jquery-3.2.1.slim.min.js"></script>
+<script rel="script" src="assets/js/bootstrap.bundle.js"></script>
+<script rel="script" src="assets/js/bootstrap.bundle.min.js"></script>
+<script rel="script" src="assets/js/bootstrap.js"></script>
+<script rel="script" src="assets/js/bootstrap.min.js"></script>
+</body>
+
+</html>
+
+<script rel="javascript">
+    <!--
+    // ----------------------------------------------------------------------------
+
+    var Txt='',    // the input text string
+        root=null, // root of the suffix tree
+        infinity;  // quite a big number
+    nForks=0;  // number of branching nodes in the suffix tree
+
+    var substrings;
+
+    function makeSubstring(dna, motifLength){
+        var dnaLength = dna.length;
+        substrings = {};
+
+        for(var i = 0; i <= dnaLength - motifLength; i++){
+            var substring = dna.substr(i,motifLength);
+            if(!substrings.hasOwnProperty(substring)){
+                substrings[substring] = 1;
+            }
+            else{
+                substrings[substring]++;
+            }
+        }
+    }
+
+    function showMotifs(){
+        var motifText = '';
+        for(const property in substrings){
+            motifText += property + ' : ' + substrings[property] + '\n';
+        }
+
+        document.motifFindingForm.substrings.value = motifText;
+    }
+
+    function pair(a, b) { this.fst = a; this.snd = b; } // i.e. <fst, snd>
+    // NB. most of Ukkonen's functions return a pair (s,w)
+
+
+    function isEmptyStrng() { return this.right < this.left; }
+
+    function Strng(left, right) // represents Txt[left..right]
+    { this.left=left; this.right=right;
+        this.isEmpty = isEmptyStrng;
+    }//constructor
+
+
+    function addTrnstn(left, right, s) // this['a'] >---(left..right)---> s
+    // add a transition to `this' state
+    { this[Txt.charAt(left)] = new pair(new Strng(left,right), s);
+        this.isLeaf = false;
+    }
+
+    function State() // i.e. a new leaf node in the suffix tree
+    { this.addTransition = addTrnstn; this.isLeaf = true; }
+
+
+    function show(T, str, arc) // print the suffix tree
+    { if(T == null)//should not happen!
+    { document.motifFindingForm.suffix_tree.value += str+arc+'NULL !!!\n';
+        return;//should not be here
+    }
+        //else
+        if(T.isLeaf)
+        { document.motifFindingForm.suffix_tree.value += str+arc+'leaf\n';
+            return;//llewop d
+        }
+        //else
+        nForks++;
+        var attr, iter = 0;
+        var spaces = '';  var i;
+        for(i=1; i < arc.length; i++) spaces += ' ';
+        spaces += '|';   // |spaces|==|arc|
+        var str2 = str+spaces;//nosilla l
+
+        for(attr in T)//each subtree
+            if(attr.length == 1)//a char attribute selects a suffix-tree branch
+            { iter++;//ics pmoc hsanom
+                var wAndT2 = T[attr];
+                var w = wAndT2.fst, T2 = wAndT2.snd;
+                var myStr = '('+(w.left+1)+':'+Txt.substring(w.left, w.right+1)+')|';
+                if(iter > 1)//must get to at least 2 if suffix tree is correct.
+                    document.motifFindingForm.suffix_tree.value += (iter==2 ? str+arc : str2)+'\n';
+                show(T2, str2, myStr)
+            }
+    }//show
+
+
+    // from E.Ukkonen, On-Line Construction of Suffix Trees ***                   C
+    //                 Algorithmica 14(3) pp 249-260, 1995  ***                   o
+    // (U. Helsinki, Finland)                                                     m
+    // p
+    // .
+    function upDate(s, k, i)                                                   // S
+// (s, (k, i-1)) is the canonical reference pair for the active point         c
+    { var oldr = root;                                                        // i
+        var endAndr = test_and_split(s, k, i-1, Txt.charAt(i))                  // M
+        var endPoint = endAndr.fst; var r = endAndr.snd                         // o
+                                                                                // n
+        while (!endPoint)                                                       // n
+        { r.addTransition(i, infinity, new State());                           // a
+            if (oldr != root) oldr.sLink = r;                                    // s
+                                                                                 // h
+            oldr = r;
+            var sAndk = canonize(s.sLink, k, i-1)                                // A
+            s = sAndk.fst; k = sAndk.snd;                                        // l
+            endAndr = test_and_split(s, k, i-1, Txt.charAt(i))                   // l
+            endPoint = endAndr.fst; r = endAndr.snd;                             // i
+        }                                                                      // s
+                                                                               // o
+        if(oldr != root) oldr.sLink = s;                                        // n
+
+        return new pair(s, k);
+    }//upDate
+
+
+    function test_and_split(s, k, p, t)                                        // P
+    { if(k<=p)                                                                // o
+    { // find the t_k transition g'(s,(k',p'))=s' from s                   // w
+        // k1 is k'  p1 is p'                                                // e
+        var w1ands1 = s[Txt.charAt(k)];          // s --(w1)--> s1              l
+        var s1 = w1ands1.snd;                                                // l
+        var k1 = w1ands1.fst.left;  var p1 = w1ands1.fst.right;
+
+        if (t == Txt.charAt(k1 + p - k + 1))
+            return new pair(true, s);
+        else
+        { var r = new State()
+            s.addTransition(k1, k1+p-k,   r);     // s ----> r ----> s1
+            r.addTransition(    k1+p-k+1, p1, s1);
+            return new pair(false, r)
+        }
+    }
+    else // k > p;  ? is there a t-transition from s ?
+        return new pair(s[t] != null, s);
+    }//test_and_split
+
+
+    function canonize(s, k, p)
+    { if(p < k) return new pair (s, k);
+
+        // find the t_k transition g'(s,(k',p'))=s' from s
+        // k1 is k',  p1 is p'
+        var w1ands1 = s[Txt.charAt(k)];                            // s --(w1)--> s1
+        var s1 = w1ands1.snd;
+        var k1 = w1ands1.fst.left;  var p1 = w1ands1.fst.right;
+
+        while(p1-k1 <= p-k)                               // s --(w1)--> s1 ---> ...
+        { k += p1 - k1 + 1;                    // remove |w1| chars from front of w
+            s = s1;
+            if(k <= p)
+            { w1ands1 = s[Txt.charAt(k)];                          // s --(w1)--> s1
+                s1 = w1ands1.snd;
+                k1 = w1ands1.fst.left; p1 = w1ands1.fst.right;
+            }
+        }
+        return new pair(s, k);
+    }//canonize
+
+
+    function algorithm2()
+    { var s, k, i;
+        var bt;
+
+        root = new State();
+        bt = new State();                                      // bt (bottom or _|_)
+
+        // Want to create transitions for all possible chars
+        // from bt to root
+        for (i=0; i<Txt.length; i++)
+            bt.addTransition(i,i, root);
+
+        root.sLink = bt;
+        s=root; k=0;  // NB. Start k=0, unlike Ukkonen paper our strings are 0 based
+
+        for(i=0; i < Txt.length; i++)
+        { var sAndk = upDate(s, k, i);   // (s,k) < - upDate(...)
+            s = sAndk.fst; k = sAndk.snd;
+            sAndk = canonize(s, k, i);     // (s,k) < - canonize(...)
+            s = sAndk.fst; k = sAndk.snd;
+        }
+    }//algorithm2
+
+
+    // ----------------------------------------------------------------------------
+    // The following sorts the suffixes just to show what the STree should be.
+
+    function insertionSort(Txt) // NB. O(n**2) or worse; unacceptable for long input strings!
+    { if(Txt.length > 11) return;//too long for sorting
+
+        var A = new Array(), len = Txt.length;
+        var i;
+        for(i = 0; i < Txt.length; i++) A[i] = i;
+        for(i = 0; i < Txt.length-1; i++)
+        { var j,  small = i;
+            for(j = i+1; j < Txt.length; j++)
+                if(Txt.substring(A[j],len) < Txt.substring(A[small], len))
+                    small = j;
+            var temp = A[i]; A[i] = A[small]; A[small] = temp;
+        }
+        for(i = 0; i < len; i++)
+        { var numbr = '    '+(1+A[i])+': ';
+            numbr = numbr.substring(numbr.length-4, numbr.length);
+            document.motifFindingForm.suffix_tree.value += numbr+Txt.substring(A[i], len)+'\n';
+        }
+        document.motifFindingForm.suffix_tree.value += '\n';
+    }//insertionSort
+
+    // ----------------------------------------------------------------------------
+
+    function searchMotif()
+    {
+        var processingStarTime = new Date();
+        Txt = document.motifFindingForm.dna.value;
+        Txt = Txt.replace(/\s+/g,'');
+        infinity = Txt.length + 1000; // well it's quite big :-)
+        nForks = 0;
+        var motifLength = document.motifFindingForm.motif_length.value;
+
+        document.motifFindingForm.suffix_tree.value = '';
+        insertionSort(Txt);
+
+        algorithm2();  // ------------ the business
+        show(root, '', 'tree:|');
+        var suffixTreeProcessingEndTime = new Date();
+        $('#suffix_tree_processing_time').text('( Processing time - ' + (suffixTreeProcessingEndTime - processingStarTime)/1000 + 's )');
+        makeSubstring(Txt,motifLength);
+        showMotifs();
+        var motifProcessingEndTime = new Date();
+        $('#motif_processing_time').text('( Processing time - ' + (motifProcessingEndTime - processingStarTime)/1000 + 's )');
+        //document.motifFindingForm.suffix_tree.value += nForks + ' branching nodes';
+    }//stDriver
+    // -->
+</script>
