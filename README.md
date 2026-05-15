@@ -3,11 +3,12 @@ Motif searching is a widely used technique of Bioinformatics - an interdisciplin
 # This is how suffix tree of given string/sequence constructed
 <img width="776" height="500" alt="Suffix1" src="https://github.com/user-attachments/assets/7045fdbb-ae16-4b00-8c6d-7fd34bf7bf30" />
 
-Number of times "se" substring/subsequence/motif occoures in the input sequence
+
 <img width="778" height="500" alt="Suffix2" src="https://github.com/user-attachments/assets/f4867cd7-bda7-4b4e-aac9-9417febfb368" />
+Number of times "se" substring/subsequence/motif occoures in the input sequence
 
-Number of times "n" substring/subsequence/motif occoures in the input sequence
 <img width="773" height="500" alt="Suffix3" src="https://github.com/user-attachments/assets/1a072621-8cdf-425c-a24b-a2ef9fdc1ff6" />
+Number of times "n" substring/subsequence/motif occoures in the input sequence
 
-Number of times "ns" substring/subsequence/motif occoures in the input sequence
 <img width="777" height="500" alt="Suffix4" src="https://github.com/user-attachments/assets/93ddc313-4d66-42ff-a3e3-cc14693ef64d" />
+Number of times "ns" substring/subsequence/motif occoures in the input sequence
