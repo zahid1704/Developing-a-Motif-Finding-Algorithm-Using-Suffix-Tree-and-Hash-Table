@@ -12,3 +12,12 @@ Number of times "n" substring/subsequence/motif occoures in the input sequence
 
 <img width="777" height="500" alt="Suffix4" src="https://github.com/user-attachments/assets/93ddc313-4d66-42ff-a3e3-cc14693ef64d" />
 Number of times "ns" substring/subsequence/motif occoures in the input sequence
+
+# Number of occurrence of any motif of a particular length in Sus Scrofa sequence of GenBank Dataset. 
+<img width="772" height="543" alt="I1" src="https://github.com/user-attachments/assets/21b74022-da37-401c-aab0-6e43a3f0ea9b" />
+
+<img width="756" height="547" alt="I2" src="https://github.com/user-attachments/assets/84cdf09c-0043-4f86-99b1-592341cc6979" />
+
+<img width="768" height="549" alt="I3" src="https://github.com/user-attachments/assets/4f436ce6-590f-476b-9d0a-7bde348862a6" />
+
+
